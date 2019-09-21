@@ -1,0 +1,20 @@
+# Visual Studio
+.vs/
+Debug/
+Release/
+_ReSharper.Caches/
+*.filters
+*.sln
+*.user
+*.vcproj
+*.vcxproj
+
+# Makefile
+out/
+*.Makefile
+*.mk
+Makefile
+
+# Xcode
+*.xcodeproj
+.DS_Store
