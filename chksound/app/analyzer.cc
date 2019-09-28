@@ -10,8 +10,13 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
-#include <thread>  // NOLINT(build/c++11)
 #include <utility>
+
+#ifdef __cpp_lib_execution
+#include <execution>
+#else
+#include <thread>  // NOLINT(build/c++11)
+#endif
 
 #include "audio/audio_reader.h"
 #include "audio/gain_analysis.h"
@@ -65,6 +70,10 @@ void Analyzer::Add(const fs::path& path) {
 }
 
 void Analyzer::Analyze() {
+#ifdef __cpp_lib_execution
+  std::for_each(std::execution::par_unseq, entries_.begin(), entries_.end(),
+                [this](auto& entry) { Analyze(&entry); });
+#else
   std::mutex mutex;
   auto current = entries_.begin();
   auto end = entries_.end();
@@ -90,55 +99,17 @@ void Analyzer::Analyze() {
 
   for (auto& thread : threads)
     thread.join();
+#endif
 }
 
 void Analyzer::Commit() {
-  for (auto& entry : entries_) {
-    if (entry.analysis == nullptr)
-      continue;
-
-    auto track_gain = -18.0 - entry.analysis->Loudness();
-    auto track_peak = static_cast<int>(entry.analysis->Peak() * 32768);
-
-    double album_gain;
-    int album_peak;
-    if (entry.aggregator != nullptr) {
-      album_gain = -18.0 - entry.aggregator->Loudness();
-      album_peak = static_cast<int>(entry.aggregator->Peak() * 32768);
-    } else {
-      album_gain = track_gain;
-      album_peak = track_peak;
-    }
-
-    int values[] = {
-        GetAdjustment(track_gain, 1000),
-        GetAdjustment(album_gain, 1000),
-        GetAdjustment(track_gain, 2500),
-        GetAdjustment(album_gain, 2500),
-        0,
-        0,
-        track_peak,
-        album_peak,
-        0,
-        0,
-    };
-
-    std::stringstream buffer;
-    for (auto value : values)
-      buffer << " " << std::uppercase << std::setfill('0') << std::setw(8)
-             << std::hex << value;
-
-    auto extension = entry.path.extension();
-    if (extension == kMP3) {
-      TagLib::MPEG::File file(entry.path.c_str(), false);
-      if (file.isValid())
-        Commit(buffer.str(), &file);
-    } else if (extension == kM4A) {
-      TagLib::MP4::File file(entry.path.c_str(), false);
-      if (file.isValid())
-        Commit(buffer.str(), &file);
-    }
-  }
+#ifdef __cpp_lib_execution
+  std::for_each(std::execution::par_unseq, entries_.begin(), entries_.end(),
+                [this](auto& entry) { Commit(&entry); });
+#else
+  for (auto& entry : entries_)
+    Commit(&entry);
+#endif
 }
 
 Analyzer::Analyzer() = default;
@@ -231,6 +202,53 @@ void Analyzer::Analyze(Entry* entry) {
 
   if (entry->aggregator != nullptr)
     entry->aggregator->Merge(entry->analysis.get());
+}
+
+void Analyzer::Commit(const Entry* entry) {
+  if (entry->analysis == nullptr)
+    return;
+
+  auto track_gain = -18.0 - entry->analysis->Loudness();
+  auto track_peak = static_cast<int>(entry->analysis->Peak() * 32768);
+
+  double album_gain;
+  int album_peak;
+  if (entry->aggregator != nullptr) {
+    album_gain = -18.0 - entry->aggregator->Loudness();
+    album_peak = static_cast<int>(entry->aggregator->Peak() * 32768);
+  } else {
+    album_gain = track_gain;
+    album_peak = track_peak;
+  }
+
+  int values[] = {
+      GetAdjustment(track_gain, 1000),
+      GetAdjustment(album_gain, 1000),
+      GetAdjustment(track_gain, 2500),
+      GetAdjustment(album_gain, 2500),
+      0,
+      0,
+      track_peak,
+      album_peak,
+      0,
+      0,
+  };
+
+  std::stringstream buffer;
+  for (auto value : values)
+    buffer << " " << std::uppercase << std::setfill('0') << std::setw(8)
+           << std::hex << value;
+
+  auto extension = entry->path.extension();
+  if (extension == kMP3) {
+    TagLib::MPEG::File file(entry->path.c_str(), false);
+    if (file.isValid())
+      Commit(buffer.str(), &file);
+  } else if (extension == kM4A) {
+    TagLib::MP4::File file(entry->path.c_str(), false);
+    if (file.isValid())
+      Commit(buffer.str(), &file);
+  }
 }
 
 void Analyzer::Commit(const std::string& normalization,

@@ -54,6 +54,7 @@ class Analyzer {
 
   void Analyze(Entry* entry);
 
+  void Commit(const Entry* entry);
   void Commit(const std::string& normalization, TagLib::MPEG::File* file);
   void Commit(const std::string& normalization, TagLib::MP4::File* file);
 
