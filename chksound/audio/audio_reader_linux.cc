@@ -75,7 +75,7 @@ class Mpg123AudioReader : public AudioReader {
 
     while (cursor_ < limit_) {
       for (auto channel = 0; channel < channels_; ++channel) {
-        auto data = cursor_[bits_ / 8 - 1] & 0x80 ? 0xFFFFFFFF << bits_ : 0;
+        int data = cursor_[bits_ / 8 - 1] & 0x80 ? 0xFFFFFFFF << bits_ : 0;
         for (auto b = 0; b < bits_; b += 8) {
           data |= *cursor_++ << b;
         }
