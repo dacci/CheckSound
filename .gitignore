@@ -18,3 +18,5 @@ Makefile
 # Xcode
 *.xcodeproj
 .DS_Store
+xcodebuild/
+gyp-mac-tool

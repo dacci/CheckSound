@@ -19,6 +19,16 @@
 
       'conditions': [
 
+        ['OS=="mac"', {
+          'defines': [
+            'OSATOMIC_USE_INLINED=1',
+          ],
+          'libraries': [
+            'libmpg123.dylib',
+            'libtag.dylib',
+          ],
+        }],
+
         ['OS=="linux"', {
           'cflags': [
             '<!@(<(pkg-config) --cflags libmpg123)',
@@ -62,10 +72,12 @@
         'app/main.cc',
         'audio/audio_reader.h',
         'audio/audio_reader_linux.cc',
+        'audio/audio_reader_mac.cc',
         'audio/audio_reader_win.cc',
         'audio/gain_analysis.h',
         'util/scoped_initialize.h',
         'util/scoped_initialize_linux.cc',
+        'util/scoped_initialize_mac.cc',
         'util/scoped_initialize_win.cc',
       ],
     },

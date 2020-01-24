@@ -30,10 +30,10 @@ namespace fs = ::std::filesystem;
 namespace chksound::app {
 namespace {
 
-const fs::path kMP3 = ".mp3";
-const fs::path kM4A = ".m4a";
-const TagLib::ByteVector kTCMP = "TCMP";
-const TagLib::ByteVector kCPIL = "cpil";
+const auto kMP3 = new fs::path(".mp3");
+const auto kM4A = new fs::path(".m4a");
+const auto kTCMP = new TagLib::ByteVector("TCMP");
+const auto kCPIL = new TagLib::ByteVector("cpil");
 
 int GetAdjustment(double gain, double base) {
   return static_cast<int>(
@@ -119,14 +119,14 @@ bool Analyzer::AddFile(const fs::path& path) {
     return false;
 
   auto extension = path.extension();
-  if (extension == kMP3) {
+  if (extension == *kMP3) {
     TagLib::MPEG::File file(path.c_str(), false);
     if (file.isValid()) {
       added_.emplace(path);
       AddFile(&file, &entries_.emplace_back(path));
       return true;
     }
-  } else if (extension == kM4A) {
+  } else if (extension == *kM4A) {
     TagLib::MP4::File file(path.c_str(), false);
     if (file.isValid()) {
       added_.emplace(path);
@@ -145,7 +145,7 @@ void Analyzer::AddFile(TagLib::MPEG::File* file, Entry* entry) {
   auto tag = file->ID3v2Tag();
 
   auto compilation = false;
-  auto& tcmp = tag->frameList(kTCMP);
+  auto& tcmp = tag->frameList(*kTCMP);
   if (!tcmp.isEmpty()) {
     bool ok;
     auto value = tcmp[0]->toString().toInt(&ok);
@@ -167,7 +167,7 @@ void Analyzer::AddFile(TagLib::MP4::File* file, Entry* entry) {
 
   auto tag = file->tag();
 
-  auto cpil = tag->item(kCPIL);
+  auto cpil = tag->item(*kCPIL);
   if (cpil.isValid() && cpil.toBool()) {
     auto artist = tag->artist();
     auto album = tag->album();
@@ -240,11 +240,11 @@ void Analyzer::Commit(const Entry* entry) {
            << std::hex << value;
 
   auto extension = entry->path.extension();
-  if (extension == kMP3) {
+  if (extension == *kMP3) {
     TagLib::MPEG::File file(entry->path.c_str(), false);
     if (file.isValid())
       Commit(buffer.str(), &file);
-  } else if (extension == kM4A) {
+  } else if (extension == *kM4A) {
     TagLib::MP4::File file(entry->path.c_str(), false);
     if (file.isValid())
       Commit(buffer.str(), &file);
