@@ -24,7 +24,8 @@
             'OSATOMIC_USE_INLINED=1',
           ],
           'libraries': [
-            'libmpg123.dylib',
+            '$(SDKROOT)/System/Library/Frameworks/CoreFoundation.framework',
+            '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
             'libtag.dylib',
           ],
         }],
@@ -77,7 +78,6 @@
         'audio/gain_analysis.h',
         'util/scoped_initialize.h',
         'util/scoped_initialize_linux.cc',
-        'util/scoped_initialize_mac.cc',
         'util/scoped_initialize_win.cc',
       ],
     },
