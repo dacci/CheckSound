@@ -31,12 +31,6 @@
     'conditions': [
 
       ['OS=="mac"', {
-        'include_dirs': [
-          '/usr/local/include',
-        ],
-        'library_dirs': [
-          '/usr/local/lib',
-        ],
         'xcode_settings': {
           'ALWAYS_SEARCH_USER_PATHS': 'NO',
           'GCC_C_LANGUAGE_STANDARD': 'c17',  # -std=c17
@@ -116,6 +110,11 @@
                 'x86_64',
               ],
             }],
+            ['target_arch=="arm64"', {
+              'ARCHS': [
+                'arm64',
+              ],
+            }],
           ],
 
           'target_conditions': [
@@ -126,6 +125,23 @@
             }],
           ],
         },
+        'conditions': [
+          ['target_arch=="arm64"', {
+            'include_dirs': [
+              '/opt/homebrew/include',
+            ],
+            'library_dirs': [
+              '/opt/homebrew/lib',
+            ],
+          }, {
+            'include_dirs': [
+              '/usr/local/include',
+            ],
+            'library_dirs': [
+              '/usr/local/lib',
+            ],
+          }]
+        ],
       }],
 
       ['OS=="linux"', {
