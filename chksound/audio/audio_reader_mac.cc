@@ -41,10 +41,9 @@ class MacAudioReader : public AudioReader {
       frames_per_packet_ = format_.mFramesPerPacket;
 
       format_.mFormatID = kAudioFormatLinearPCM;
-      format_.mFormatFlags =
-          kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsSignedInteger;
+      format_.mFormatFlags = kAudioFormatFlagsNativeFloatPacked;
       format_.mFramesPerPacket = 1;
-      format_.mBitsPerChannel = 32;
+      format_.mBitsPerChannel = 64;
       format_.mBytesPerFrame =
           format_.mBitsPerChannel / 8 * format_.mChannelsPerFrame;
       format_.mBytesPerPacket =
@@ -70,8 +69,8 @@ class MacAudioReader : public AudioReader {
 
   bool Read(double* buffer) override {
     if (!buffer_) {
-      buffer_ = std::make_unique<int32_t[]>(format_.mChannelsPerFrame *
-                                            frames_per_packet_);
+      buffer_ = std::make_unique<double[]>(format_.mChannelsPerFrame *
+                                           frames_per_packet_);
       cursor_ = buffer_.get();
       limit_ = cursor_;
     }
@@ -92,7 +91,7 @@ class MacAudioReader : public AudioReader {
 
     while (cursor_ < limit_) {
       for (auto channel = 0U; channel < format_.mChannelsPerFrame; ++channel) {
-        buffer[channel] = *(cursor_++) / kRange;
+        buffer[channel] = *(cursor_++);
       }
 
       return true;
@@ -114,15 +113,13 @@ class MacAudioReader : public AudioReader {
   }
 
  private:
-  static constexpr double kRange = 0x7FFFFFFF;
-
   ExtAudioFileRef file_;
   AudioStreamBasicDescription format_;
 
   uint32_t frames_per_packet_;
-  std::unique_ptr<int32_t[]> buffer_;
-  int32_t* cursor_;
-  int32_t* limit_;
+  std::unique_ptr<double[]> buffer_;
+  double* cursor_;
+  double* limit_;
 
   MacAudioReader(const MacAudioReader&) = delete;
   MacAudioReader& operator=(const MacAudioReader&) = delete;
