@@ -168,7 +168,7 @@ void Analyzer::AddFile(TagLib::MP4::File* file, Entry* entry) {
   auto tag = file->tag();
 
   auto cpil = tag->item(*kCPIL);
-  if (cpil.isValid() && cpil.toBool()) {
+  if (cpil.isValid() && !cpil.toBool()) {
     auto artist = tag->artist();
     auto album = tag->album();
     auto group_key = artist.to8Bit(true) + '\0' + album.to8Bit(true);
